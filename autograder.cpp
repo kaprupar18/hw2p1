@@ -17,6 +17,7 @@ int main( int argc, char **argv )
     double t[MAX_ENTRIES],slope[MAX_ENTRIES-1],ss[MAX_ENTRIES],sse[MAX_ENTRIES],ws[MAX_ENTRIES],grade,ssgrade,wsgrade,sse_avg,ws_avg;
     double lt[MAX_ENTRIES],ln[MAX_ENTRIES],b2,sx=0.0,sx2=0.0,sxy=0.0,sy=0.0;
 
+
     if( find_option( argc, argv, "-h" ) >= 0 )
     {
         printf( "Options:\n" );
@@ -29,8 +30,10 @@ int main( int argc, char **argv )
     char *savename = read_string( argc, argv, "-s", NULL );
     FILE *fread = savename ? fopen( savename, "r" ) : NULL;
 
+    // autoname is the important variable that determines what we are grading
     char *autoname = read_string( argc, argv, "-v", NULL );
      
+    // ****** SERIAL VERSION OF CODE ******
     if (strcmp(autoname,"serial")==0){
       if(fread) 
         while( fscanf (fread,"%d %lf",&n[count],&t[count]) != EOF ) 
@@ -68,6 +71,7 @@ int main( int argc, char **argv )
       printf("\n\n");
     }
 
+    // ****** MULTI-THREAD/PROCESSOR VERSION OF CODE ******
     if (strcmp(autoname,"pthreads")==0 || strcmp(autoname,"openmp")==0 || strcmp(autoname,"mpi")==0){
       if(fread){
         fscanf (fread,"%d %lf",&n[count],&t[count]);
