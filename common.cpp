@@ -92,15 +92,28 @@ void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, dou
     double dy = neighbor.y - particle.y;
     double r2 = dx * dx + dy * dy;
     if( r2 > cutoff*cutoff )
+    {
         return;
-	if (r2 != 0)
-        {
-	   if (r2/(cutoff*cutoff) < *dmin * (*dmin))
+    }
+
+    // Since the algorithm will comparit a particle with itself we need to take this into
+    // account by having the particle be returned uneffected
+    if( r2 == 0.0)
+    {
+    	return;
+    }
+
+	if (r2 != 0.0)
+    {
+	   if (r2/(cutoff*cutoff) < (*dmin) * (*dmin))
+	   {
 	      *dmin = sqrt(r2)/cutoff;
-           (*davg) += sqrt(r2)/cutoff;
-           (*navg) ++;
-        }
-		
+	   }
+       (*davg) += sqrt(r2)/cutoff;
+       (*navg) ++;
+    }
+
+	// Enable a mimimum radius so we dont have crazy high forces causing instability
     r2 = fmax( r2, min_r*min_r );
     double r = sqrt( r2 );
  
