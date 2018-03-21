@@ -1,0 +1,6 @@
+#!/bin/bash
+
+sbatch auto-bridges-serial
+sbatch auto-bridges-openmp16
+sbatch auto-bridges-mpi16
+watch squeue -u kapru

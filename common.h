@@ -13,6 +13,7 @@ const int SAVEFREQ = 10;
 //
 // particle data structure
 //
+#pragma pack() // Pack so we know the order of the data
 typedef struct 
 {
   double x;

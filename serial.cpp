@@ -93,12 +93,14 @@ int main(int argc, char **argv) {
 		//  -The average distance absavg is ~.95 when most particles are interacting correctly and ~.66 when no particles are interacting
 		//
 		printf(", absmin = %lf, absavg = %lf", absmin, absavg);
-		if (absmin < 0.4)
+		if (absmin < 0.4){
 			printf(
 					"\nThe minimum distance is below 0.4 meaning that some particle is not interacting");
-		if (absavg < 0.8)
+		}
+		if (absavg < 0.8){
 			printf(
 					"\nThe average distance is below 0.8 meaning that most particles are not interacting");
+		}
 	}
 	printf("\n");
 
