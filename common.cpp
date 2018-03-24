@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "common.h"
+#include "mkl.h"
 
 double size;
 
@@ -130,31 +131,65 @@ void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, dou
 //
 //  integrate the ODE
 //
-void move( particle_t &p )
+void move( particle_t &p)
 {
     //
     //  slightly simplified Velocity Verlet integration
     //  conserves energy better than explicit Euler method
     //
-    p.vx += p.ax * dt;
-    p.vy += p.ay * dt;
-    p.x  += p.vx * dt;
-    p.y  += p.vy * dt;
+	p.vx += p.ax * dt;
+	p.vy += p.ay * dt;
+	p.x  += p.vx * dt;
+	p.y  += p.vy * dt;
 
     //
     //  bounce from walls
     //
-    while( p.x < 0 || p.x > size )
+    if( p.x < 0 || p.x > size )
     {
-        p.x  = p.x < 0 ? -p.x : 2*size-p.x;
-        p.vx = -p.vx;
+    	p.x  = p.x < 0 ? -p.x : 2*size-p.x;
+    	p.vx = -p.vx;
     }
-    while( p.y < 0 || p.y > size )
+    if( p.y < 0 || p.y > size )
     {
-        p.y  = p.y < 0 ? -p.y : 2*size-p.y;
+    	p.y  = p.y < 0 ? -p.y : 2*size-p.y;
         p.vy = -p.vy;
     }
 }
+//void move( particle_t &p_in, particle_t &p_out )
+//{
+//    //
+//    //  slightly simplified Velocity Verlet integration
+//    //  conserves energy better than explicit Euler method
+//    //
+//	p_out.vx += p_in.ax * dt;
+//	p_out.vy += p_in.ay * dt;
+//	p_out.x  += p_in.vx * dt;
+//	p_out.y  += p_in.vy * dt;
+//
+//    //
+//    //  bounce from walls
+//    //
+//    if( p_out.x < 0 || p_out.x > size )
+//    {
+//    	p_out.x  = p_out.x < 0 ? -p_out.x : 2*size-p_out.x;
+//    	p_out.vx = -p_out.vx;
+//    }
+//    if( p_out.y < 0 || p_out.y > size )
+//    {
+//    	p_out.y  = p_out.y < 0 ? -p_out.y : 2*size-p_out.y;
+//        p_out.vy = -p_out.vy;
+//    }
+//}
+
+//
+//	state update
+//
+//void stateUpdate( double *p_in, double *p_out ){
+//	cblas_dgemm('C', CblasNoTrans, CblasNoTrans,
+//	                m, n, k, alpha, A, k, B, n, beta, C, n);
+//}
+
 
 //
 //  I/O routines
