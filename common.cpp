@@ -86,46 +86,38 @@ void init_particles( int n, particle_t *p )
 //
 //  interact two particles
 //
-void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, double *davg, int *navg)
-{
+void apply_force(particle_t &particle, particle_t &neighbor, double *dmin,
+		double *davg, int *navg) {
 
-    double dx = neighbor.x - particle.x;
-    double dy = neighbor.y - particle.y;
-    double r2 = dx * dx + dy * dy;
-    if( r2 > cutoff*cutoff )
-    {
-        return;
-    }
+	double dx = neighbor.x - particle.x;
+	double dy = neighbor.y - particle.y;
+	double r2 = dx * dx + dy * dy;
+	if (r2 > cutoff * cutoff) {
+		return;
+	}
 
-    // Since the algorithm will comparit a particle with itself we need to take this into
-    // account by having the particle be returned uneffected
-    if( r2 == 0.0)
-    {
-    	return;
-    }
+	// Since the algorithm will comparit a particle with itself we need to take this into
+	// account by having the particle be returned uneffected
+	if (r2 == 0.0) {
+		return;
+	}
 
-	if (r2 != 0.0)
-    {
-	   if (r2/(cutoff*cutoff) < (*dmin) * (*dmin))
-	   {
-	      *dmin = sqrt(r2)/cutoff;
-	   }
-       (*davg) += sqrt(r2)/cutoff;
-       (*navg) ++;
-    }
+	if (r2 / (cutoff * cutoff) < (*dmin) * (*dmin)) {
+		*dmin = sqrt(r2) / cutoff;
+	}
+	(*davg) += sqrt(r2) / cutoff;
+	(*navg)++;
 
 	// Enable a mimimum radius so we dont have crazy high forces causing instability
-    r2 = fmax( r2, min_r*min_r );
-    double r = sqrt( r2 );
- 
-    
-	
-    //
-    //  very simple short-range repulsive force
-    //
-    double coef = ( 1 - cutoff / r ) / r2 / mass;
-    particle.ax += coef * dx;
-    particle.ay += coef * dy;
+	r2 = fmax(r2, min_r * min_r);
+	double r = sqrt(r2);
+
+	//
+	//  very simple short-range repulsive force
+	//
+	double coef = (1 - cutoff / r) / r2 / mass;
+	particle.ax += coef * dx;
+	particle.ay += coef * dy;
 }
 
 //

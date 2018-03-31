@@ -24,6 +24,13 @@ typedef struct
   double ay;
 } particle_t;
 
+
+typedef struct
+{
+	particle_t *particles;
+	int numel;
+};
+
 //
 //  timing routines
 //

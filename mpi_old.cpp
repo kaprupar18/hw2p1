@@ -44,17 +44,58 @@ int main(int argc, char **argv) {
 	FILE *fsave = savename && rank == 0 ? fopen(savename, "w") : NULL;
 	FILE *fsum = sumname && rank == 0 ? fopen(sumname, "a") : NULL;
 
+
 	MPI_Datatype PARTICLE;
 	MPI_Type_contiguous(6, MPI_DOUBLE, &PARTICLE);
 	MPI_Type_commit(&PARTICLE);
 
-	//****************  MASTER  ****************
-	if (rank == 0) {
-		std::vector < std::vector<particle> > particles;
 
-		//  initialize and distribute the particles (that's fine to leave it unoptimized)
-		set_size(n);
+	if(rank == 0){
+		std::vector< std::vector<particle> > particles;
+
+	//
+	//  set up the data partitioning across processors
+	//
+	int particle_per_proc = (n + n_proc - 1) / n_proc;
+	int *partition_offsets = (int*) malloc((n_proc + 1) * sizeof(int));
+	for (int i = 0; i < n_proc + 1; i++) {
+		partition_offsets[i] = min(i * particle_per_proc, n);
+	}
+
+	int *partition_sizes = (int*) malloc(n_proc * sizeof(int));
+	for (int i = 0; i < n_proc; i++) {
+		partition_sizes[i] = partition_offsets[i + 1] - partition_offsets[i];
+	}
+
+	//
+	//  allocate storage for local partition
+	//
+	int nlocal = partition_sizes[rank];
+	particle_t *local = (particle_t*) malloc(nlocal * sizeof(particle_t));
+
+	//
+	//  initialize and distribute the particles (that's fine to leave it unoptimized)
+	//
+	set_size(n);
+	if (rank == 0) {
 		init_particles(n, particles);
+	}
+	MPI_Scatterv(particles, partition_sizes, partition_offsets, PARTICLE, local,
+			nlocal, PARTICLE, 0, MPI_COMM_WORLD);
+
+	//
+	//  simulate a number of time steps
+	//
+	double simulation_time = read_timer();
+	for (int step = 0; step < NSTEPS; step++) {
+		navg = 0;
+		dmin = 1.0;
+		davg = 0.0;
+		//
+		//  collect all global data locally (not good idea to do)
+		//
+		MPI_Allgatherv(local, nlocal, PARTICLE, particles, partition_sizes,
+				partition_offsets, PARTICLE, MPI_COMM_WORLD);
 
 		//
 		//  save current step if necessary (slightly different semantics than in other codes)
@@ -64,25 +105,23 @@ int main(int argc, char **argv) {
 				save(fsave, n, particles);
 
 		//
-		//  simulate a number of time steps
+		//  compute all forces
 		//
-		double simulation_time = read_timer();
-		for (int step = 0; step < NSTEPS; step++) {
-			navg = 0;
-			dmin = 1.0;
-			davg = 0.0;
+		for (int i = 0; i < nlocal; i++) {
+			local[i].ax = local[i].ay = 0;
+			for (int j = 0; j < n; j++)
+				apply_force(local[i], particles[j], &dmin, &davg, &navg);
+		}
 
-			//
-			//  compute all forces
-			//
-			for (int i = 0; i < nlocal; i++) {
-				local[i].ax = local[i].ay = 0;
-				for (int j = 0; j < n; j++)
-					apply_force(local[i], particles[j], &dmin, &davg, &navg);
-			}
+		if (find_option(argc, argv, "-no") == -1) {
 
-			if (find_option(argc, argv, "-no") == -1) {
+			MPI_Reduce(&davg, &rdavg, 1, MPI_DOUBLE, MPI_SUM, 0,
+					MPI_COMM_WORLD);
+			MPI_Reduce(&navg, &rnavg, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+			MPI_Reduce(&dmin, &rdmin, 1, MPI_DOUBLE, MPI_MIN, 0,
+					MPI_COMM_WORLD);
 
+			if (rank == 0) {
 				//
 				// Computing statistical data
 				//
@@ -92,20 +131,16 @@ int main(int argc, char **argv) {
 				}
 				if (rdmin < absmin)
 					absmin = rdmin;
-
 			}
-
 		}
-		simulation_time = read_timer() - simulation_time;
 
-	} else//****************  SLAVES  ****************
-	{
 		//
 		//  move particles
 		//
 		for (int i = 0; i < nlocal; i++)
-			move (local[i]);
+			move(local[i]);
 	}
+	simulation_time = read_timer() - simulation_time;
 
 	if (rank == 0) {
 		printf("n = %d, simulation time = %g seconds", n, simulation_time);
@@ -142,6 +177,10 @@ int main(int argc, char **argv) {
 	//
 	if (fsum)
 		fclose(fsum);
+	free(partition_offsets);
+	free(partition_sizes);
+	free(local);
+	free(particles);
 	if (fsave)
 		fclose(fsave);
 
