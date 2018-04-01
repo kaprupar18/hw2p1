@@ -29,7 +29,7 @@ typedef struct
 {
 	particle_t *particles;
 	int numel;
-};
+}bucket_t;
 
 //
 //  timing routines

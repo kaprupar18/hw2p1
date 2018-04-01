@@ -33,10 +33,11 @@ int main(int argc, char **argv) {
 	//
 	//  set up MPI
 	//
-	int n_proc, rank;
+	int n_proc, rank, num_slaves;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &n_proc); // Total number of processors available
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); // Current processor number
+	num_slaves = n_proc - 1;
 
 	//
 	//  allocate generic resources
@@ -50,14 +51,17 @@ int main(int argc, char **argv) {
 
 	//****************  MASTER  ****************
 	if (rank == 0) {
-		std::vector < std::vector<particle> > particles;
+		std::vector < std::vector<particle_t> > particle_vec;
 
 		//  initialize and distribute the particles (that's fine to leave it unoptimized)
+		particle_t *particles = (particle_t*) malloc(n * sizeof(particle_t));
 		set_size(n);
 		init_particles(n, particles);
 
 		//
-		//  save current step if necessary (slightly different semantics than in other codes)
+		//  save current step if necessary (slightly different semantics than in other codes)			navg = 0;
+		dmin = 1.0;
+		davg = 0.0;
 		//
 		if (find_option(argc, argv, "-no") == -1)
 			if (fsave && (step % SAVEFREQ) == 0)
@@ -68,17 +72,26 @@ int main(int argc, char **argv) {
 		//
 		double simulation_time = read_timer();
 		for (int step = 0; step < NSTEPS; step++) {
+
+
+		}
+		simulation_time = read_timer() - simulation_time;
+
+	} else		//****************  SLAVES  ****************
+	{
+
+		for (int step = 0; step < NSTEPS; step++) {
 			navg = 0;
 			dmin = 1.0;
 			davg = 0.0;
-
 			//
 			//  compute all forces
 			//
 			for (int i = 0; i < nlocal; i++) {
 				local[i].ax = local[i].ay = 0;
-				for (int j = 0; j < n; j++)
+				for (int j = 0; j < n; j++){
 					apply_force(local[i], particles[j], &dmin, &davg, &navg);
+				}
 			}
 
 			if (find_option(argc, argv, "-no") == -1) {
@@ -94,17 +107,15 @@ int main(int argc, char **argv) {
 					absmin = rdmin;
 
 			}
+			//
+			//  move particles
+			//
+			for (int i = 0; i < nlocal; i++) {
+				move (local[i]);
+			}
 
 		}
-		simulation_time = read_timer() - simulation_time;
 
-	} else//****************  SLAVES  ****************
-	{
-		//
-		//  move particles
-		//
-		for (int i = 0; i < nlocal; i++)
-			move (local[i]);
 	}
 
 	if (rank == 0) {
