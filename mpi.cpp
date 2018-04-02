@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &n_proc); // Total number of processors available
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); // Current processor number
-	num_slaves = n_proc - 1;
+	//num_slaves = n_proc - 1;
 
 	//
 	//  allocate generic resources
@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
 	//****************  MASTER  ****************
 	if (rank == 0) {
 		std::vector < std::vector<particle_t> > particle_vec;
+		std::vector < std::vector<particle_t> > ghost_vec;
 
 		//  initialize and distribute the particles (that's fine to leave it unoptimized)
 		particle_t *particles = (particle_t*) malloc(n * sizeof(particle_t));
@@ -72,9 +73,40 @@ int main(int argc, char **argv) {
 		//
 		double simulation_time = read_timer();
 		for (int step = 0; step < NSTEPS; step++) {
+			// STEP - 1
+			// TODO: Break up partiles into particle_vec and ghost_vec
 
+			// STEP - 2
+			// Send all vectors to their respective processes
+			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
+				// Set particle vec
+				MPI_Send(particle_vec[curr_slave - 1].data(),
+						particle_vec[curr_slave - 1].size(), PARTICLE,
+						curr_slave, 1, MPI_COMM_WORLD);
+			}
+
+			// STEP - 3
+			// Send all ghost vectors
+			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
+				// Set particle vec
+				MPI_Send(ghost_vec[curr_slave - 1].data(),
+						ghost_vec[curr_slave - 1].size(), PARTICLE,
+						curr_slave, 2, MPI_COMM_WORLD);
+			}
+
+			// STEP - 4
+			// Receive all completed particles
+			int counter = 0;
+			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
+				// Recieve new particles
+				MPI_Recv(particles[counter],
+						particle_vec[curr_slave - 1].size(), PARTICLE,
+						curr_slave, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				counter += particle_vec[curr_slave - 1].size();
+			}
 
 		}
+
 		simulation_time = read_timer() - simulation_time;
 
 	} else		//****************  SLAVES  ****************
@@ -94,6 +126,13 @@ int main(int argc, char **argv) {
 				}
 			}
 
+			//
+			//  move particles
+			//
+			for (int i = 0; i < nlocal; i++) {
+				move (local[i]);
+			}
+
 			if (find_option(argc, argv, "-no") == -1) {
 
 				//
@@ -107,12 +146,7 @@ int main(int argc, char **argv) {
 					absmin = rdmin;
 
 			}
-			//
-			//  move particles
-			//
-			for (int i = 0; i < nlocal; i++) {
-				move (local[i]);
-			}
+
 
 		}
 
