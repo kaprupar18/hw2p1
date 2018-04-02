@@ -111,11 +111,23 @@ int main(int argc, char **argv) {
 
 	} else		//****************  SLAVES  ****************
 	{
+		particle_t *local = (particle_t*) malloc(n * sizeof(particle_t));
+		MPI_Status status;
+		int local_count = 0;
 
 		for (int step = 0; step < NSTEPS; step++) {
 			navg = 0;
 			dmin = 1.0;
 			davg = 0.0;
+
+			// STEP - 1
+			// Receive all the main particles
+			MPI_Recv(local, n, PARTICLE, 0, 1, MPI_COMM_WORLD, status);
+			MPI_Get_count(&status, PARTICLE, &local_count);
+
+
+
+
 			//
 			//  compute all forces
 			//
