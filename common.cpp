@@ -119,7 +119,38 @@ void apply_force(particle_t &particle, particle_t &neighbor, double *dmin,
 	particle.ax += coef * dx;
 	particle.ay += coef * dy;
 }
+void opapply_force( particle_t *particle, particle_t *neighbor , double *dmin, double *davg, int *navg)
+{
 
+    double dx = neighbor->x - particle->x;
+    double dy = neighbor->y - particle->y;
+   // printf("Decimals: %f , \n",dy);
+    double r2 = dx * dx + dy * dy;
+
+    if( r2 > cutoff*cutoff )
+        return;
+
+	if (r2 != 0)
+        {
+	   if (r2/(cutoff*cutoff) < *dmin * (*dmin))
+	      *dmin = sqrt(r2)/cutoff;
+           (*davg) += sqrt(r2)/cutoff;
+           (*navg) ++;
+        }
+		
+    r2 = fmax( r2, min_r*min_r );
+    double r = sqrt( r2 );
+
+    
+	
+    //
+    //  very simple short-range repulsive force
+    //
+    double coef = ( 1 - cutoff / r ) / r2 / mass;
+    particle->ax += coef * dx;
+    particle->ay += coef * dy;
+
+}
 //
 //  integrate the ODE
 //
@@ -224,3 +255,68 @@ char *read_string( int argc, char **argv, const char *option, char *default_valu
         return argv[iplace+1];
     return default_value;
 }
+// Bucket
+void setbounds(bucket *p,double sx,double sy, double ex, double ey) //  sets boundaries
+{
+  p->sx = sx;
+  p->sy = sy;
+  p->ex = ex;
+  p->ey = ey;
+
+};
+void addparticle(bucket *p, particle_t *k)
+{
+    p->arr.push_back(k);
+    p->count = p->count + 1;
+};
+void deleteparticle(bucket *p, particle_t *k)
+{
+    for (int i = 0; i<(p->arr.size()); i++)
+        {   
+         if(k == p->arr[i])
+            {   
+                p->arr.erase(p->arr.begin() + i);
+                p->count = p->count - 1;
+                break;
+            }
+        }
+};
+
+double sumx(bucket *p)
+{
+    double allx; // av[1] = x average
+    double x; 
+        for(int i = 0; i < p->arr.size();i++)
+            {
+                x = p->arr[i]->x; 
+                allx += x;  
+            }
+    return allx; 
+};
+double sumy(bucket *p)
+{
+    double ally; // av[1] = x average
+    double y;  
+        for(int i = 0; i < p->arr.size();i++)
+            {
+                y = p->arr[i]->y;
+                ally += y;  
+            }
+    return ally; 
+};
+void insort(bucket *p, particle_t *t, int size)
+{
+double sx = p->sx; 
+double sy = p->sy; 
+double ex = p->ex; 
+double ey = p->ey; 
+for (int i = 0; i < size ; i++) 
+{
+    if(t[i]. x >= sx && t[i].x <= ex && t[i].y >= sy && t[i].y <=ey)
+    {
+        addparticle(p,&t[i]);
+    }
+}
+
+}; 
+
