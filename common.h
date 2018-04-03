@@ -1,6 +1,8 @@
+
 #ifndef __CS267_COMMON_H__
 #define __CS267_COMMON_H__
-
+#include <vector>
+using namespace std; 
 inline int min( int a, int b ) { return a < b ? a : b; }
 inline int max( int a, int b ) { return a > b ? a : b; }
 
@@ -23,6 +25,27 @@ typedef struct
   double ay;
 } particle_t;
 
+typedef struct
+{
+double sx; //starting of x
+double sy; // starting of y
+double ex; //end of x
+double ey; // end of y
+int count;
+vector<particle_t*> arr; // vector which points to the addresses of the particles
+}bucket;
+
+//
+//
+// Buckets routine 
+//
+void setbounds(bucket *p,double sx,double sy, double ex, double ey); // sets boundaries
+void addparticle(bucket *p, particle_t *k);
+void deleteparticle(bucket *p, particle_t *k);
+double sumx(bucket *p);
+double sumy(bucket *p); 
+void insort(bucket *p, particle_t *t, int size);
+
 //
 //  timing routines
 //
@@ -31,9 +54,10 @@ double read_timer( );
 //
 //  simulation routines
 //
-void set_size( int n );
+double set_size( int n );
 void init_particles( int n, particle_t *p );
 void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, double *davg, int *navg);
+void opapply_force( particle_t *particle, particle_t *neighbor , double *dmin, double *davg, int *navg);
 void move( particle_t &p );
 
 
