@@ -9,20 +9,11 @@
 #include "common.h"
 #include "mkl.h"
 
-double size;
+int create_buckets(particle_t *particles, int particle_count, int bucket_count){
+	for(int i = 0; i < bucket_count; i++){
 
-//
-//  tuned constants
-//
-#define density 0.0005
-#define mass    0.01
-#define cutoff  0.01
-#define min_r   (cutoff/100)
-#define dt      0.0005
-
-//
-//  timer
-//
+	}
+}
 double split_bucket(std::vector < std::vector<particle_t> > &particles, std::vector < std::vector<particle_t> > &ghosts)
 {
     static bool initialized = false;

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <vector>
 #include "common.h"
 
 //
@@ -11,7 +12,7 @@ int main(int argc, char **argv) {
 	int navg, nabsavg = 0;
 	double dmin, absmin = 1.0, davg, absavg = 0.0;
 	double rdavg, rdmin;
-	int rnavg;
+	int rnavg = 0;
 
 	//
 	//  process command line parameters
@@ -33,7 +34,7 @@ int main(int argc, char **argv) {
 	//
 	//  set up MPI
 	//
-	int n_proc, rank, num_slaves;
+	int n_proc, rank;//, num_slaves;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &n_proc); // Total number of processors available
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); // Current processor number
@@ -48,9 +49,11 @@ int main(int argc, char **argv) {
 	MPI_Datatype PARTICLE;
 	MPI_Type_contiguous(6, MPI_DOUBLE, &PARTICLE);
 	MPI_Type_commit(&PARTICLE);
+	double simulation_time = 0.0;
 
 	//****************  MASTER  ****************
 	if (rank == 0) {
+		printf("Starting master\n");
 		std::vector < std::vector<particle_t> > particle_vec;
 		std::vector < std::vector<particle_t> > ghost_vec;
 
@@ -60,19 +63,15 @@ int main(int argc, char **argv) {
 		init_particles(n, particles);
 
 		//
-		//  save current step if necessary (slightly different semantics than in other codes)			navg = 0;
-		dmin = 1.0;
-		davg = 0.0;
-		//
-		if (find_option(argc, argv, "-no") == -1)
-			if (fsave && (step % SAVEFREQ) == 0)
-				save(fsave, n, particles);
-
-		//
 		//  simulate a number of time steps
 		//
-		double simulation_time = read_timer();
+		simulation_time = read_timer();
 		for (int step = 0; step < NSTEPS; step++) {
+
+			if (find_option(argc, argv, "-no") == -1)
+				if (fsave && (step % SAVEFREQ) == 0)
+					save(fsave, n, particles);
+
 			// STEP - 1
 			// TODO: Break up partiles into particle_vec and ghost_vec
 
@@ -90,16 +89,16 @@ int main(int argc, char **argv) {
 			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
 				// Set particle vec
 				MPI_Send(ghost_vec[curr_slave - 1].data(),
-						ghost_vec[curr_slave - 1].size(), PARTICLE,
-						curr_slave, 2, MPI_COMM_WORLD);
+						ghost_vec[curr_slave - 1].size(), PARTICLE, curr_slave,
+						2, MPI_COMM_WORLD);
 			}
 
 			// STEP - 4
 			// Receive all completed particles
 			int counter = 0;
 			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
-				// Recieve new particles
-				MPI_Recv(particles[counter],
+				// Receive new particles
+				MPI_Recv(&particles[counter],
 						particle_vec[curr_slave - 1].size(), PARTICLE,
 						curr_slave, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				counter += particle_vec[curr_slave - 1].size();
@@ -111,38 +110,52 @@ int main(int argc, char **argv) {
 
 	} else		//****************  SLAVES  ****************
 	{
+		printf("Starting slave %d\n", rank);
 		particle_t *local = (particle_t*) malloc(n * sizeof(particle_t));
+		particle_t *local_ghost = (particle_t*) malloc(n * sizeof(particle_t));
+
 		MPI_Status status;
 		int local_count = 0;
+		int local_ghost_count = 0;
 
 		for (int step = 0; step < NSTEPS; step++) {
 			navg = 0;
 			dmin = 1.0;
 			davg = 0.0;
+			printf("Slave %d, step %d\n", rank, step);
 
 			// STEP - 1
 			// Receive all the main particles
-			MPI_Recv(local, n, PARTICLE, 0, 1, MPI_COMM_WORLD, status);
+			MPI_Recv(local, n, PARTICLE, 0, 1, MPI_COMM_WORLD, &status);
+			printf("Slave %d, recieved local particles\n", rank);
 			MPI_Get_count(&status, PARTICLE, &local_count);
+			printf("Slave %d, recieved local particles count = %d\n", rank, local_count);
 
-
-
+			// Receive all the main particles
+			MPI_Recv(local_ghost, n, PARTICLE, 0, 2, MPI_COMM_WORLD, &status);
+			MPI_Get_count(&status, PARTICLE, &local_ghost_count);
 
 			//
 			//  compute all forces
 			//
-			for (int i = 0; i < nlocal; i++) {
+			for (int i = 0; i < local_count; i++) {
 				local[i].ax = local[i].ay = 0;
-				for (int j = 0; j < n; j++){
-					apply_force(local[i], particles[j], &dmin, &davg, &navg);
+				// Apply from fellow local
+				for (int j = 0; j < local_count; j++) {
+					apply_force(local[i], local[j], &dmin, &davg, &navg);
+				}
+				// Apply from ghosts
+				for (int j = 0; j < local_ghost_count; j++) {
+					apply_force(local[i], local_ghost[j], &dmin, &davg,
+							&navg);
 				}
 			}
 
 			//
 			//  move particles
 			//
-			for (int i = 0; i < nlocal; i++) {
-				move (local[i]);
+			for (int i = 0; i < local_count; i++) {
+				move(local[i]);
 			}
 
 			if (find_option(argc, argv, "-no") == -1) {
@@ -159,6 +172,7 @@ int main(int argc, char **argv) {
 
 			}
 
+			MPI_Send(local, local_count, PARTICLE, 0, 3, MPI_COMM_WORLD);
 
 		}
 
