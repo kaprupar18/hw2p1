@@ -24,17 +24,17 @@ set(HEADERS
 )
 
 set(SOURCES
-    common.cpp
+    #common.cpp
 )
 
-add_executable(serial ${HEADERS} serial ${SOURCES})
+add_executable(serial ${HEADERS} serial common.cpp)
 target_link_libraries( serial)
 
-add_executable(autograder ${HEADERS} autograder.cpp ${SOURCES})
+add_executable(autograder ${HEADERS} autograder.cpp common.cpp)
 target_link_libraries( autograder)
 
-add_executable(openmp ${HEADERS} openmp.cpp ${SOURCES})
-target_link_libraries( openmp)
+#add_executable(openmp ${HEADERS} openmp.cpp ${SOURCES})
+#target_link_libraries( openmp)
 
 add_executable(mpi ${HEADERS} mpi.cpp ${SOURCES})
 target_link_libraries( mpi ${MPI_C_LIBRARIES})

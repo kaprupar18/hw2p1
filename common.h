@@ -1,6 +1,8 @@
 #ifndef __CS267_COMMON_H__
 #define __CS267_COMMON_H__
 
+#include <vector>
+
 inline int min( int a, int b ) { return a < b ? a : b; }
 inline int max( int a, int b ) { return a > b ? a : b; }
 
@@ -23,6 +25,7 @@ typedef struct
   double ax;
   double ay;
 } particle_t;
+
 typedef struct
 {
 double sx; //starting of x
@@ -30,7 +33,7 @@ double sy; // starting of y
 double ex; //end of x
 double ey; // end of y
 int count;
-vector<particle_t*> arr; // vector which points to the addresses of the particles
+std::vector<particle_t*> arr; // vector which points to the addresses of the particles
 }bucket;
 
 typedef struct

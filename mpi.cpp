@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <vector>
-#include "common.h"
+//#include <vector>
+#include "bucket.cpp"
 
 //
 //  benchmarking program
@@ -34,11 +34,11 @@ int main(int argc, char **argv) {
 	//
 	//  set up MPI
 	//
-	int n_proc, rank;//, num_slaves;
+	int n_proc, rank, num_slaves;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &n_proc); // Total number of processors available
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); // Current processor number
-	//num_slaves = n_proc - 1;
+	num_slaves = n_proc - 1;
 
 	//
 	//  allocate generic resources
@@ -73,12 +73,13 @@ int main(int argc, char **argv) {
 					save(fsave, n, particles);
 
 			// STEP - 1
-			// TODO: Break up partiles into particle_vec and ghost_vec
+			create_buckets(particles, n, num_slaves, particle_vec, ghost_vec);
 
 			// STEP - 2
 			// Send all vectors to their respective processes
 			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
 				// Set particle vec
+				printf("Sending %d particles to slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
 				MPI_Send(particle_vec[curr_slave - 1].data(),
 						particle_vec[curr_slave - 1].size(), PARTICLE,
 						curr_slave, 1, MPI_COMM_WORLD);
@@ -122,14 +123,14 @@ int main(int argc, char **argv) {
 			navg = 0;
 			dmin = 1.0;
 			davg = 0.0;
-			printf("Slave %d, step %d\n", rank, step);
+//			printf("Slave %d, step %d\n", rank, step);
 
 			// STEP - 1
 			// Receive all the main particles
 			MPI_Recv(local, n, PARTICLE, 0, 1, MPI_COMM_WORLD, &status);
-			printf("Slave %d, recieved local particles\n", rank);
+//			printf("Slave %d, recieved local particles\n", rank);
 			MPI_Get_count(&status, PARTICLE, &local_count);
-			printf("Slave %d, recieved local particles count = %d\n", rank, local_count);
+//			printf("Slave %d, recieved local particles count = %d\n", rank, local_count);
 
 			// Receive all the main particles
 			MPI_Recv(local_ghost, n, PARTICLE, 0, 2, MPI_COMM_WORLD, &status);
@@ -146,8 +147,7 @@ int main(int argc, char **argv) {
 				}
 				// Apply from ghosts
 				for (int j = 0; j < local_ghost_count; j++) {
-					apply_force(local[i], local_ghost[j], &dmin, &davg,
-							&navg);
+					apply_force(local[i], local_ghost[j], &dmin, &davg, &navg);
 				}
 			}
 
