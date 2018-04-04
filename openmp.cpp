@@ -30,40 +30,68 @@ int main(int argc, char **argv) {
 	FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
 
 	particle_t *particles = (particle_t*) malloc(n * sizeof(particle_t));
-	set_size(n);
+	double size = set_size(n);
 	init_particles(n, particles);
 
 	//
 	//  simulate a number of time steps
 	//
 	double simulation_time = read_timer();
+    
+    
 
-#pragma omp parallel private(dmin)
+#pragma omp parallel private(dmin) shared(particles,p,ghost)
 	{
 		numthreads = omp_get_num_threads();
+        bucket *p = (bucket *)malloc(numthreads* sizeof(bucket));
+        bucket *ghost = (bucket *)malloc(numthreads* sizeof(bucket));
 		for (int step = 0; step < 1000; step++) {
 			navg = 0;
 			davg = 0.0;
 			dmin = 1.0;
+#pragma omp for reduction (+:navg) reduction(+:davg)
+            for (int i =0; i<numthreads; i++)
+            {
+                //printf(" num of threads:%i num of particle:%i \n",numthreads,n); 
+                int r = i+1;
+                p[i].sx = (size/numthreads)*i;
+                p[i].sy = (size/numthreads)*i;
+                p[i].ex = (size/numthreads)*(r);
+                p[i].ey = (size/numthreads)*(r);
+                p[i].count = 0; 
+                insort(&p[i], particles, n);
+                printf(" pi count: %i \n, bucket name: %i ", p[i].count,i);
+                for(int k = 0; k < p[i].count; k++)
+                {
+                    p[i].arr[k]->ax = p[i].arr[k]->ay = 0;
+                    for (int j = 0; j < p[i].count; j++)
+                    {
+                        
+					    opapply_force(p[i].arr[k], p[i].arr[j], &dmin, &davg, &navg); 
+                      
+                    }
+                }   
+            }
 
 
 
 			//
 			//  compute all forces
 			//
-#pragma omp for reduction (+:navg) reduction(+:davg)
+/*#pragma omp for reduction (+:navg) reduction(+:davg)
 			for (int i = 0; i < n; i++) {
 				particles[i].ax = particles[i].ay = 0;
 				for (int j = 0; j < n; j++)
 					apply_force(particles[i], particles[j], &dmin, &davg, &navg);
 			}
-
+*/
 			//
 			//  move particles
 			//
 #pragma omp for
 			for (int i = 0; i < n; i++)
 				move(particles[i]);
+
 
 			if (find_option(argc, argv, "-no") == -1) {
 				//
