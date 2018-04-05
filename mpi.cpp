@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
 	//****************  MASTER  ****************
 	if (rank == 0) {
-		printf("Starting master\n");
+		//printf("Starting master\n");
 		std::vector < std::vector<particle_t> > particle_vec;
 		std::vector < std::vector<particle_t> > ghost_vec;
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 			// STEP - 1
 			create_buckets(particles, n, num_slaves, particle_vec, ghost_vec);
 			if(num_slaves != 1){
-				printf("Created %d buckets for %d slaves\n", (int)particle_vec.size(), num_slaves);
+				//printf("Created %d buckets for %d slaves\n", (int)particle_vec.size(), num_slaves);
 			}
 
 			// STEP - 2
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
 				// Set particle vec
 				if(num_slaves != 1){
-					printf("Sending %d particles to slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
+					//printf("Sending %d particles to slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
 				}
 				MPI_Send(particle_vec[curr_slave - 1].data(),
 						particle_vec[curr_slave - 1].size(), PARTICLE,
@@ -108,6 +108,7 @@ int main(int argc, char **argv) {
 						particle_vec[curr_slave - 1].size(), PARTICLE,
 						curr_slave, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				counter += particle_vec[curr_slave - 1].size();
+				//printf("Receive %d particles from slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
 			}
 
 		}
