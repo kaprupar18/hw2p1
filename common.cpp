@@ -7,7 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "common.h"
-#include "mkl.h"
+//#include "mkl.h"
 
 double size;
 

@@ -3,9 +3,9 @@
 #
 # Intel Compilers are loaded by default; for other compilers please check the module list
 #
-CC = icpc
+CC = g++
 MPCC = mpicxx
-OPENMP = -qopenmp
+OPENMP = -fopenmp
 CFLAGS = -O3
 LIBS =
 

@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8.0)
 project (hw2p1)
 
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror -rdynamic -O3 -g -fopenmp")
+set(CMAKE_CXX_FLAGS "-std=c++11 -rdynamic -O3 -g -fopenmp")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g")
 
 configure_file(auto-bridges-mpi16 auto-bridges-mpi16 COPYONLY)
@@ -33,8 +33,8 @@ target_link_libraries( serial)
 add_executable(autograder ${HEADERS} autograder.cpp common.cpp)
 target_link_libraries( autograder)
 
-#add_executable(openmp ${HEADERS} openmp.cpp ${SOURCES})
-#target_link_libraries( openmp)
+add_executable(openmp ${HEADERS} openmp.cpp ${SOURCES})
+target_link_libraries( openmp)
 
 add_executable(mpi ${HEADERS} mpi.cpp ${SOURCES})
 target_link_libraries( mpi ${MPI_C_LIBRARIES})

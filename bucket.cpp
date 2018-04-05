@@ -8,7 +8,7 @@
 //#include <sys/time.h>
 //#include <vector>
 #include "common.cpp"
-#include "mkl.h"
+//#include "mkl.h"
 
 int split_bucket(particle_t *all_particles, int particle_count,
 		std::vector<std::vector<particle_t> > &particles,
