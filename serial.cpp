@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 	std::vector < std::vector<particle_t> > particle_vec;
 	std::vector < std::vector<particle_t> > ghost_vec;
 
-	const int BUCKET_COUNT = 50;
+	const int BUCKET_COUNT = 10;
 	for (int step = 0; step < NSTEPS; step++) {
 		navg = 0;
 		davg = 0.0;
