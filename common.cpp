@@ -103,6 +103,7 @@ void apply_force(particle_t &particle, particle_t &neighbor, double *dmin,
 	}
 	(*davg) += sqrt(r2) / cutoff;
 	(*navg)++;
+	//printf("Applied force a %dth time with davg = %lf \n", (*navg), (*davg));
 
 	// Enable a mimimum radius so we dont have crazy high forces causing instability
 	r2 = fmax(r2, min_r * min_r);

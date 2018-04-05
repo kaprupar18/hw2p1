@@ -15,8 +15,8 @@ int main(int argc, char **argv) {
 	double absmin = 1.0;
 	double davg = 0.0; 
 	double absavg = 0.0;
-	double rdavg, rdmin;
-	int rnavg = 0;
+	//double rdavg, rdmin;
+	//int rnavg = 0;
 
 	//
 	//  process command line parameters
@@ -169,16 +169,17 @@ int main(int argc, char **argv) {
 			}
 
 			if (find_option(argc, argv, "-no") == -1) {
-
 				//
 				// Computing statistical data
 				//
-				if (rnavg) {
-					absavg += rdavg / rnavg;
+				if (navg) {
+					absavg += davg / navg;
 					nabsavg++;
+					//printf("Slave %d, new absavg = %lf , nabsavg = %d \n", rank, absavg, nabsavg);
 				}
-				if (rdmin < absmin)
-					absmin = rdmin;
+				if (dmin < absmin)
+					absmin = dmin;
+					//printf("Slave %d, new min = %lf \n", rank, absmin);
 
 			}
 
@@ -196,7 +197,7 @@ int main(int argc, char **argv) {
 			//
 			//  -The average distance absavg is ~.95 when most particles are interacting correctly and ~.66 when no particles are interacting
 			//
-			printf(", absmin = %lf, absavg = %lf", absmin, absavg);
+			printf("absmin = %lf, absavg = %lf", absmin, absavg);
 			if (absmin < 0.4)
 				printf(
 						"\nThe minimum distance is below 0.4 meaning that some particle is not interacting");
