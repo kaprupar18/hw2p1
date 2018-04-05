@@ -9,8 +9,12 @@
 //  benchmarking program
 //
 int main(int argc, char **argv) {
-	int navg, nabsavg = 0;
-	double dmin, absmin = 1.0, davg, absavg = 0.0;
+	int navg = 0;
+	int nabsavg = 0;
+	double dmin = 1.0;
+	double absmin = 1.0;
+	double davg = 0.0; 
+	double absavg = 0.0;
 	double rdavg, rdmin;
 	int rnavg = 0;
 
@@ -179,14 +183,9 @@ int main(int argc, char **argv) {
 			}
 
 			MPI_Send(local, local_count, PARTICLE, 0, 3, MPI_COMM_WORLD);
-
 		}
-
-	}
-
-	if (rank == 0) {
-		printf("n = %d, simulation time = %g seconds", n, simulation_time);
-
+		
+		// Each slave is responsible for its own
 		if (find_option(argc, argv, "-no") == -1) {
 			if (nabsavg)
 				absavg /= nabsavg;
@@ -206,6 +205,12 @@ int main(int argc, char **argv) {
 						"\nThe average distance is below 0.8 meaning that most particles are not interacting");
 		}
 		printf("\n");
+
+	}
+
+	if (rank == 0) {
+		printf("n = %d, simulation time = %g seconds", n, simulation_time);
+
 
 		//
 		// Printing summary data

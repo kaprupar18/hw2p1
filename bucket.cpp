@@ -69,8 +69,8 @@ int split_bucket(particle_t *all_particles, int particle_count,
 			max_x = dmax(max_x, curr_part->x);
 			max_y = dmax(max_y, curr_part->y);
 		}
-		printf("Bucket Split Stats on X : minx=%lf, maxx=%lf, miny=%lf, maxy=%lf, meanx=%lf, meany=%lf, stdx=%lf, stdy=%lf \n",
-							min_x, max_x, min_y, max_y, mean_x, mean_y, std_x, std_y);
+		//printf("Bucket Split Stats on X : minx=%lf, maxx=%lf, miny=%lf, maxy=%lf, meanx=%lf, meany=%lf, stdx=%lf, stdy=%lf \n",
+							//min_x, max_x, min_y, max_y, mean_x, mean_y, std_x, std_y);
 
 		for (int i = 0; i < particle_count; i++) {
 			if ((all_particles[i].x > min_x - cutoff
@@ -112,8 +112,8 @@ int split_bucket(particle_t *all_particles, int particle_count,
 			max_x = dmax(max_x, curr_part->x);
 			max_y = dmax(max_y, curr_part->y);
 		}
-		printf("Bucket Split Stats on Y : minx=%lf, maxx=%lf, miny=%lf, maxy=%lf, meanx=%lf, meany=%lf, stdx=%lf, stdy=%lf \n",
-							min_x, max_x, min_y, max_y, mean_x, mean_y, std_x, std_y);
+		//printf("Bucket Split Stats on Y : minx=%lf, maxx=%lf, miny=%lf, maxy=%lf, meanx=%lf, meany=%lf, stdx=%lf, stdy=%lf \n",
+							//min_x, max_x, min_y, max_y, mean_x, mean_y, std_x, std_y);
 
 		for (int i = 0; i < particle_count; i++) {
 			if ((all_particles[i].x > min_x - cutoff
@@ -173,8 +173,8 @@ int create_buckets(particle_t *particles, int particle_count, int bucket_count,
 			}
 		}
 
-		printf("Splitting bucket %d of %d with %d particles\n", max_bucket, (int)particle_vec.size(),
-				max_bucket_count);
+		//printf("Splitting bucket %d of %d with %d particles\n", max_bucket, (int)particle_vec.size(),
+				//max_bucket_count);
 		split_bucket(particles, particle_count, particle_vec, ghost_vec,
 				max_bucket);
 
