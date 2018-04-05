@@ -74,12 +74,17 @@ int main(int argc, char **argv) {
 
 			// STEP - 1
 			create_buckets(particles, n, num_slaves, particle_vec, ghost_vec);
+			if(num_slaves != 1){
+				printf("Created %d buckets for %d slaves\n", (int)particle_vec.size(), num_slaves);
+			}
 
 			// STEP - 2
 			// Send all vectors to their respective processes
 			for (int curr_slave = 1; curr_slave < n_proc; curr_slave++) {
 				// Set particle vec
-				printf("Sending %d particles to slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
+				if(num_slaves != 1){
+					printf("Sending %d particles to slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
+				}
 				MPI_Send(particle_vec[curr_slave - 1].data(),
 						particle_vec[curr_slave - 1].size(), PARTICLE,
 						curr_slave, 1, MPI_COMM_WORLD);

@@ -6,6 +6,9 @@
 inline int min( int a, int b ) { return a < b ? a : b; }
 inline int max( int a, int b ) { return a > b ? a : b; }
 
+inline double dmin( double a, double b ) { return a < b ? a : b; }
+inline double dmax( double a, double b ) { return a > b ? a : b; }
+
 //
 //  saving parameters
 //
