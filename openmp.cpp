@@ -84,21 +84,17 @@
 								}
 							}			
 							//
-							printf("\n Done doing forces");//  move particles
+							//printf("\n Done doing forces");//  move particles
 							//
 				//#pragma omp barrier
-				
-				//#pragma omp for 
-						for(int k = 0; k < numthreads;k++)
-						{
-				 			for(int i = 0; i <(int)(particle_vec[k].size());i++)
-				 			{
-				 				particles[k*numthreads + i] = particle_vec[k][i];
-				 			}
-				 			printf("\n Done copying: %i",k);
-						}
-						
-				#pragma omp parallel for
+							int counter = 0;
+				#pragma omp for 
+					for(int curr_bucket = 0; curr_bucket < (int)particle_vec.size(); curr_bucket++){
+						memcpy(&particles[counter], particle_vec[curr_bucket].data(), particle_vec[curr_bucket].size() * sizeof(particle_t));
+						counter += particle_vec[curr_bucket].size();
+						//printf("Receive %d particles from slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
+					}
+				#pragma omp parallel for //schedule(dynamic)
 					    for (int i = 0; i < n; i++)
 							move(particles[i]);
 							
