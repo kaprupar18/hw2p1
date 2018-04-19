@@ -27,7 +27,7 @@ set(SOURCES
     #common.cpp
 )
 
-add_executable(serial ${HEADERS} serial common.cpp)
+add_executable(serial ${HEADERS} serial ${SOURCES})
 target_link_libraries( serial)
 
 add_executable(autograder ${HEADERS} autograder.cpp common.cpp)
