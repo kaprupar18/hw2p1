@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <assert.h>
 //#include <vector>
-#include "bucket.cpp"
+#include "do_serial.h"
+
 
 //
 //  benchmarking program
@@ -54,6 +55,7 @@ int main(int argc, char **argv) {
 	MPI_Type_contiguous(6, MPI_DOUBLE, &PARTICLE);
 	MPI_Type_commit(&PARTICLE);
 	double simulation_time = 0.0;
+	int BUCKET_COUNT = 100;
 
 	//****************  MASTER  ****************
 	if (rank == 0) {
@@ -146,24 +148,18 @@ int main(int argc, char **argv) {
 			MPI_Recv(local_ghost, n, PARTICLE, 0, 2, MPI_COMM_WORLD, &status);
 			MPI_Get_count(&status, PARTICLE, &local_ghost_count);
 
-			//
-			//  compute all forces
-			//
+			// Compute all the movement from local non-ghost particles
+			do_serial_process(local, n, BUCKET_COUNT, dmin, davg, navg);
+
+			//  compute ghost forces
 			for (int i = 0; i < local_count; i++) {
 				local[i].ax = local[i].ay = 0;
-				// Apply from fellow local
-				for (int j = 0; j < local_count; j++) {
-					apply_force(local[i], local[j], &dmin, &davg, &navg);
-				}
 				// Apply from ghosts
 				for (int j = 0; j < local_ghost_count; j++) {
 					apply_force(local[i], local_ghost[j], &dmin, &davg, &navg);
 				}
 			}
-
-			//
 			//  move particles
-			//
 			for (int i = 0; i < local_count; i++) {
 				move(local[i]);
 			}
