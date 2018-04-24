@@ -1,0 +1,4 @@
+/home/jariy/hw2p1t/hw2p1/CMakeFiles/autograder.dir
+/home/jariy/hw2p1t/hw2p1/CMakeFiles/mpi.dir
+/home/jariy/hw2p1t/hw2p1/CMakeFiles/openmp.dir
+/home/jariy/hw2p1t/hw2p1/CMakeFiles/serial.dir

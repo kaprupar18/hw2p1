@@ -1,0 +1,1 @@
+/usr/lib64/ccache/c++   -std=c++11 -rdynamic -O3 -g -fopenmp    CMakeFiles/openmp.dir/openmp.cpp.o  -o openmp -rdynamic 

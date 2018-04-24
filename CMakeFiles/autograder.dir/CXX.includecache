@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jariy/hw2p1t/hw2p1/common.cpp
+stdlib.h
+-
+stdio.h
+-
+assert.h
+-
+float.h
+-
+string.h
+-
+math.h
+-
+time.h
+-
+sys/time.h
+-
+common.h
+/home/jariy/hw2p1t/hw2p1/common.h
+
+/home/jariy/hw2p1t/hw2p1/common.h
+vector
+-
+

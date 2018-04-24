@@ -24,7 +24,7 @@ set(HEADERS
 )
 
 set(SOURCES
-    #common.cpp
+   #common.cpp
 )
 
 add_executable(serial ${HEADERS} serial ${SOURCES})

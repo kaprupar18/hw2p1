@@ -38,8 +38,15 @@ double read_timer() {
 //
 //  keep density constant
 //
-void set_size(int n) {
+void set_size(int n) { 
 	size = sqrt( density * n);
+}
+
+double set_sizep(int n) {
+	double sizer; 
+	size = sqrt( density * n);
+	sizer = size; 
+	return sizer; 
 }
 
 //
@@ -48,7 +55,7 @@ void set_size(int n) {
 void init_particles(int n, particle_t *p) {
 	srand48 (time(NULL) );
 
-int	sx = (int)ceil(sqrt((double)n));
+	int sx = (int)ceil(sqrt((double)n));
 	int sy = (n+sx-1)/sx;
 
 	int *shuffle = (int*)malloc( n * sizeof(int) );
@@ -287,14 +294,18 @@ double sumy(bucket *p) {
 	return ally;
 }
 ;
-void insort(bucket *p, particle_t *t, int size) {
+void insort(bucket *p, particle_t *t, int size, bucket *ghost) {
 	double sx = p->sx;
 	double sy = p->sy;
 	double ex = p->ex;
 	double ey = p->ey;
 	for (int i = 0; i < size; i++) {
-		if (t[i].x >= sx && t[i].x <= ex && t[i].y >= sy && t[i].y <= ey) {
+		if (t[i].x >= sx && t[i].x <= ex /*t[i].y >= sy && t[i].y <= ey */) {
 			addparticle(p, &t[i]);
+			addparticle(ghost,&t[i]);
+		}
+		else if(t[i].x >= sx && t[i].x <= (ex+.1)){
+			addparticle(ghost, &t[i]);
 		}
 	}
 
