@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include "common.h"
+#include "common.cpp"
 #include "omp.h"
-#include "bucket.cpp"
-
+//#include "bucket.cpp"
 //
 //  benchmarking program
 //
@@ -30,103 +31,104 @@ int main(int argc, char **argv) {
 	FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
 
 	particle_t *particles = (particle_t*) malloc(n * sizeof(particle_t));
-	set_size(n);
-	init_particles(n, particles);
-	std::vector < std::vector<particle_t> > particle_vec;
-	std::vector < std::vector<particle_t> > ghost_vec;
+	double size = set_sizep(n);
+	init_particles(n, particles); 
 
 	//
 	//  simulate a number of time steps
 	//
 	double simulation_time = read_timer();
+    
+    
 
-	//#pragma omp parallel private(dmin) shared(particle_vec,ghost_vec)
-	//{
-	numthreads = omp_get_num_threads();
+#pragma omp parallel private(dmin) /*shared(particles,p,ghost)*/
+	{
+		numthreads = omp_get_num_threads();
+		for (int step = 0; step < 100; step++) {
+			navg = 0;
+			davg = 0.0;
+			dmin = 1.0;
+#pragma omp for reduction (+:navg) reduction(+:davg) 
+            		for (int i =0; i<numthreads; i++)
+            		{
+				//Intialize the Partitions 
+				bucket *p = new bucket(); 
+				bucket *ghost = new bucket();
 
-	//create_buckets(particles, n, numthreads, particle_vec, ghost_vec);
+                		//printf(" num of threads:%i num of particle:%i \n",numthreads,n); 
+                		int r = i+1;
+                		p->sx = (size/numthreads)*i; 
+                		p->sy = (size/numthreads)*i;
+                		p->ex = (size/numthreads)*(r) + .1; 
+                		p->ey = (size/numthreads)*(r);
+                		p->count = 0; 
+                		insort(p, particles, n, ghost);
+                		//printf(" pi count: %i \n, bucket name: %i ", p->count,i);
+                		for(int k = 0; k < p->arr.size(); k++)
+                		{
+                    			p->arr[k]->ax = p->arr[k]->ay = 0;
+                    			for (int j = 0; j < ghost->arr.size(); j++)
+                    			{
+                        
+					    opapply_force(p->arr[k], ghost->arr[j], &dmin, &davg, &navg); 
+                      
+                    			}
+                		}
+				for (int q = 0; q < p->arr.size(); i++) {
+                                	move(p->&(arr[q])); 
+                        	}
 
-	for (int step = 0; step < 1000; step++) {
+				delete p; 
+				delete ghost;    
+            		}
 
-		create_buckets(particles, n, numthreads, particle_vec, ghost_vec);
 
-		navg = 0;
-		davg = 0.0;
-		dmin = 1.0;
 
-		//
-		//  compute all forces
-		//
-		/*#pragma omp for reduction (+:navg) reduction(+:davg)
-		 for (int i = 0; i < n; i++) {
-		 particles[i].ax = particles[i].ay = 0;
-		 for (int j = 0; j < n; j++)
-		 apply_force(particles[i], particles[j], &dmin, &davg, &navg);
-		 }
-		 */
-#pragma omp parallel for reduction (+:navg) reduction(+:davg) private(dmin) shared(particle_vec,ghost_vec)
-		for (int k = 0; k < numthreads; k++) {
-			for (int i = 0; i < (int) (particle_vec[k].size()); i++) {
-				particle_vec[k][i].ax = particle_vec[k][i].ay = 0;
-				// Apply from fellow local
-				for (int j = 0; j < (int) (particle_vec[k].size()); j++) {
-					apply_force(particle_vec[k][i], particle_vec[k][j], &dmin,
-							&davg, &navg);
-				}
-				// Apply from ghosts
-				for (int j = 0; j < (int) (ghost_vec[k].size()); j++) {
-					apply_force(particle_vec[k][i], ghost_vec[k][j], &dmin,
-							&davg, &navg);
-				}
+			//
+			//  compute all forces
+			//
+/*#pragma omp for reduction (+:navg) reduction(+:davg)
+			for (int i = 0; i < n; i++) {
+				particles[i].ax = particles[i].ay = 0;
+				for (int j = 0; j < n; j++)
+					apply_force(particles[i], particles[j], &dmin, &davg, &navg);
 			}
-		}
-		//
-		//printf("\n Done doing forces");//  move particles
-		//
-		//#pragma omp barrier
-		int counter = 0;
-#pragma omp for
-		for (int curr_bucket = 0; curr_bucket < (int) particle_vec.size();
-				curr_bucket++) {
-			memcpy(&particles[counter], particle_vec[curr_bucket].data(),
-					particle_vec[curr_bucket].size() * sizeof(particle_t));
-			counter += particle_vec[curr_bucket].size();
-			//printf("Receive %d particles from slave %d\n", (int)particle_vec[curr_slave - 1].size(), curr_slave);
-		}
-#pragma omp parallel for //schedule(dynamic)
-		for (int i = 0; i < n; i++)
-			move(particles[i]);
-
-		if (find_option(argc, argv, "-no") == -1) {
+*/
 			//
-			//  compute statistical data
+			//  move particles
 			//
+/*#pragma omp for
+			for (int i = 0; i < n; i++)
+				move(particles[i]);
+*/
 
-			//#pragma omp master
-			if (navg) {
-				absavg += davg / navg;
-				nabsavg++;
+			if (find_option(argc, argv, "-no") == -1) {
+				//
+				//  compute statistical data
+				//
+//#pragma omp master
+				if (navg) {
+					absavg += davg / navg;
+					nabsavg++;
+				}
+
+//#pragma omp critical
+				if (dmin < absmin)
+					absmin = dmin;
+
+				//
+				//  save if necessary
+				//
+//#pragma omp master
+				if (fsave && (step % SAVEFREQ) == 0)
+					save(fsave, n, particles);
 			}
-
-			//#pragma omp critical
-			if (dmin < absmin)
-				absmin = dmin;
-
-			//
-			//  save if necessary
-			//
-			//#pragma omp master
-			if (fsave && (step % SAVEFREQ) == 0)
-				save(fsave, n, particles);
+		
 		}
 	}
-	//#pragma omp barrier
-	//}
-
 	simulation_time = read_timer() - simulation_time;
 
-	printf("n = %d,threads = %d, simulation time = %g seconds", n, numthreads,
-			simulation_time);
+	printf("n = %d,threads = %d, simulation time = %g seconds", n, numthreads,simulation_time);
 
 	if (find_option(argc, argv, "-no") == -1) {
 		if (nabsavg)

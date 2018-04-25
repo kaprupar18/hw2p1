@@ -2,7 +2,7 @@
 #define __CS267_COMMON_H__
 
 #include <vector>
-
+//#include "common.cpp"
 inline int min( int a, int b ) { return a < b ? a : b; }
 inline int max( int a, int b ) { return a > b ? a : b; }
 
@@ -54,7 +54,7 @@ void addparticle(bucket *p, particle_t *k);
 void deleteparticle(bucket *p, particle_t *k);
 double sumx(bucket *p);
 double sumy(bucket *p); 
-void insort(bucket *p, particle_t *t, int size);
+void insort(bucket *p, particle_t *t, int size, bucket *ghost);
 
 //
 //  timing routines
@@ -65,6 +65,7 @@ double read_timer( );
 //  simulation routines
 //
 void set_size( int n );
+double set_sizep(int n);
 void init_particles( int n, particle_t *p );
 void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, double *davg, int *navg);
 void opapply_force( particle_t *particle, particle_t *neighbor , double *dmin, double *davg, int *navg);
