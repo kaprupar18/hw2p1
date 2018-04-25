@@ -1,1 +1,0 @@
-/usr/lib64/ccache/c++   -std=c++11 -rdynamic -O3 -g -fopenmp    CMakeFiles/autograder.dir/autograder.cpp.o CMakeFiles/autograder.dir/common.cpp.o  -o autograder -rdynamic 
