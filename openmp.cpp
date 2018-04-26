@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
 
 	particle_t *particles = (particle_t*) malloc(n * sizeof(particle_t));
 	set_size(n);
+	int threads = omp_get_num_threads();
 	init_particles(n, particles);
 
 	//
@@ -37,12 +38,35 @@ int main(int argc, char **argv) {
 	double simulation_time = read_timer();
 
 	const int BUCKET_COUNT = 100;
+	std::vector <std::vector<particle_t> > particle_vec; 
+	std::vector <std::vector<particle_t> > ghost_vec; 
+
 	for (int step = 0; step < NSTEPS; step++) {
 		navg = 0;
 		davg = 0.0;
-		dmin = 1.0;
+		dmin = 1.0;	
+		create_buckets(particles, n, threads, particle_vec, ghost_vec);
+#pragma omp parallel for reduction (+:navg) reduction (+:davg)
 
-		do_serial_process(particles, n, BUCKET_COUNT, dmin, davg, navg);
+		for (int i = 0; i < threads; i++){
+	 		//do_serial_process(particles, n, BUCKET_COUNT, dmin, davg, navg);
+			do_serial_process(particle_vec[i].data(), particle_vec[i].size(), BUCKET_COUNT, dmin, davg, navg);
+
+			//  compute ghost forces
+			for (int ii = 0; ii < particle_vec[i].size(); ii++) {
+				particle_vec[i].data()[ii].ax = particle_vec[i].data()[ii].ay = 0;
+				// Apply from ghosts
+				for (int j = 0; j < ghost_vec[i].size(); j++) {
+					apply_force(particle_vec[i].data()[ii], ghost_vec[i].data()[j], &dmin, &davg, &navg);
+				}
+			}
+			//  move particles
+			for (int iii = 0; iii < particle_vec[i].size(); iii++) {
+				move(particle_vec[i].data()[iii]);
+			}
+
+		}
+		
 
 		if (find_option(argc, argv, "-no") == -1) {
 
@@ -63,6 +87,7 @@ int main(int argc, char **argv) {
 				save(fsave, n, particles);
 		}
 	}
+
 	simulation_time = read_timer() - simulation_time;
 
 	printf("n = %d, simulation time = %g seconds", n, simulation_time);
