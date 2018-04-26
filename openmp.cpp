@@ -66,6 +66,11 @@ int main(int argc, char **argv) {
 			}
 
 		}
+		int counter = 0; 
+		for (int curr_bucket =0; curr_bucket < (int)particle_vec.size(); curr_bucket++){
+		memcpy(&particles[counter], particle_vec[curr_bucket].data(), particle_vec[curr_bucket].size() *sizeof(particle_t));
+		counter += particle_vec[curr_bucket].size(); 
+		}
 		
 
 		if (find_option(argc, argv, "-no") == -1) {
@@ -73,10 +78,13 @@ int main(int argc, char **argv) {
 			//
 			// Computing statistical data
 			//
+#pragma omp critical 
+{
 			if (navg) {
 				absavg += davg / navg;
 				nabsavg++;
 			}
+}
 			if (dmin < absmin)
 				absmin = dmin;
 
