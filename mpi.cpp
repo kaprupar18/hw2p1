@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
 			}
 			//  move particles
 			for (int i = 0; i < local_count; i++) {
-				move(local[i]);
+				acc_move(local[i]);
 			}
 
 			if (find_option(argc, argv, "-no") == -1) {

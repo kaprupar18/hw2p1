@@ -46,15 +46,19 @@ int main(int argc, char **argv) {
 		davg = 0.0;
 		dmin = 1.0;	
 		create_buckets(particles, n, threads, particle_vec, ghost_vec);
-#pragma omp parallel for reduction (+:navg) reduction (+:davg)
 
+		//printf("Running %d threads on step %d\n", threads, step);
+		#pragma omp parallel for reduction (+:navg) reduction (+:davg)
 		for (int i = 0; i < threads; i++){
+			//printf("i = %d, particle_vec size = %d ghost_vec size = %d \n", i, particle_vec[i].size(), ghost_vec[i].size());
 	 		//do_serial_process(particles, n, BUCKET_COUNT, dmin, davg, navg);
 			do_serial_process(particle_vec[i].data(), particle_vec[i].size(), BUCKET_COUNT, dmin, davg, navg);
 
+			//printf("davg = %f, navg = %d\n", davg, navg);
+
 			//  compute ghost forces
 			for (int ii = 0; ii < particle_vec[i].size(); ii++) {
-				particle_vec[i].data()[ii].ax = particle_vec[i].data()[ii].ay = 0;
+				particle_vec[i].data()[ii].ax = particle_vec[i].data()[ii].ay = 0.0;
 				// Apply from ghosts
 				for (int j = 0; j < ghost_vec[i].size(); j++) {
 					apply_force(particle_vec[i].data()[ii], ghost_vec[i].data()[j], &dmin, &davg, &navg);
@@ -62,14 +66,19 @@ int main(int argc, char **argv) {
 			}
 			//  move particles
 			for (int iii = 0; iii < particle_vec[i].size(); iii++) {
-				move(particle_vec[i].data()[iii]);
+				acc_move(particle_vec[i].data()[iii]);
 			}
 
+			//printf("davg = %f, navg = %d\n", davg, navg);
+
 		}
+
+		//printf("davg = %f, navg = %d\n", davg, navg);
+
 		int counter = 0; 
 		for (int curr_bucket =0; curr_bucket < (int)particle_vec.size(); curr_bucket++){
-		memcpy(&particles[counter], particle_vec[curr_bucket].data(), particle_vec[curr_bucket].size() *sizeof(particle_t));
-		counter += particle_vec[curr_bucket].size(); 
+			memcpy(&particles[counter], particle_vec[curr_bucket].data(), particle_vec[curr_bucket].size() *sizeof(particle_t));
+			counter += particle_vec[curr_bucket].size(); 
 		}
 		
 
@@ -78,13 +87,12 @@ int main(int argc, char **argv) {
 			//
 			// Computing statistical data
 			//
-#pragma omp critical 
-{
+
 			if (navg) {
 				absavg += davg / navg;
 				nabsavg++;
 			}
-}
+
 			if (dmin < absmin)
 				absmin = dmin;
 

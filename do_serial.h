@@ -13,6 +13,7 @@ void do_serial_process(particle_t *particles_ptr, int n_particles,
 
 	// Create bucket
 	create_buckets(particles_ptr, n_particles, BUCKET_COUNT, particle_vec, ghost_vec);
+	
 
 	//
 	//  compute forces
@@ -26,6 +27,7 @@ void do_serial_process(particle_t *particles_ptr, int n_particles,
 			// Apply from fellow local
 			for (int j = 0; j < (int) particle_vec[curr_bucket].size(); j++) {
 				apply_force(local[i], local[j], &dmin, &davg, &navg);
+				//printf("davg = %f, navg = %d\n", davg, navg);
 			}
 			// Apply from ghosts
 			for (int j = 0; j < (int) ghost_vec[curr_bucket].size(); j++) {

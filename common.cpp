@@ -177,6 +177,29 @@ void move(particle_t &p) {
 		p.vy = -p.vy;
 	}
 }
+
+void acc_move(particle_t &p) {
+	//
+	//  slightly simplified Velocity Verlet integration
+	//  conserves energy better than explicit Euler method
+	//
+	p.x += p.ax * dt * dt;
+	p.y += p.ay * dt * dt;
+
+
+	//
+	//  bounce from walls
+	//
+	if (p.x < 0 || p.x > size) {
+		p.x = p.x < 0 ? -p.x : 2 * size - p.x;
+		p.vx = -p.vx;
+	}
+	if (p.y < 0 || p.y > size) {
+		p.y = p.y < 0 ? -p.y : 2 * size - p.y;
+		p.vy = -p.vy;
+	}
+}
+
 //void move( particle_t &p_in, particle_t &p_out )
 //{
 //    //
